@@ -1,0 +1,29 @@
+/// <reference types="node" />
+
+/**
+ * Prisma Client Initialization
+ *
+ * This module configures and exports a single Prisma client
+ * instance to interact with the PostgreSQL database.
+ *
+ * Features:
+ *  • Prevents multiple Prisma instances during development
+ *  • Enables query logging for debugging
+ *  • Uses generated Prisma client types
+ *
+ * Dependencies:
+ *  • Prisma ORM
+ */
+
+// import { PrismaClient } from '../../generated/prisma';
+import { PrismaClient } from '@prisma/client';
+
+// 1. Reuse global Prisma instance in development to avoid multiple connections
+export const prisma =
+  (globalThis as any).prisma ||
+  new PrismaClient({
+    // log: process.env.NODE_ENV === 'development' ? ['query','warn','error'] : [],
+  });
+
+// 2. Store Prisma instance globally (only in non-production mode)
+if (process.env.NODE_ENV !== "production") (globalThis as any).prisma = prisma;

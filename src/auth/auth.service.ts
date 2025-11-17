@@ -1,51 +1,70 @@
-// src/auth/auth.service.ts
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
-import { LoginDto } from './dto/login.dto';
-import { UserResponseDto } from './dto/user-response.dto';
-import bcrypt from 'bcrypt';
-import { signShortToken, signLongToken } from '../lib/jwt/jwt.helper';
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import * as bcrypt from 'bcrypt';
+import { signShortToken, signLongToken } from '../lib/jwt/jwt_helper'; // použiješ tvoje funkcie
 
 @Injectable()
 export class AuthService {
   constructor(private prisma: PrismaService) {}
 
-  async login(dto: LoginDto, res: any) {
-    const { email, password } = dto;
-
-    const user = await this.prisma.client.users.findUnique({
+  //login
+  async validateUser(email: string, password: string) {
+    const user = await this.prisma.users.findUnique({
       where: { email },
     });
 
-    if (!user) {
-      throw new UnauthorizedException('invalid_credentials');
+    if (!user) return null;
+
+    const valid: boolean = await bcrypt.compare(password, user.password) as boolean;
+    if (!valid) return null;
+
+    const shortToken: string = signShortToken(user.id, user.email);
+    const longToken: string  = signLongToken(user.id);
+
+    return {
+      user,
+      shortToken,
+      longToken,
+    };
+  }
+
+  //registration
+  async registerUser(name: string, email: string, password: string) {
+    try {
+      // 1. Check if email already exists
+      const existingUser = await this.prisma.users.findUnique({
+        where: { email },
+      });
+
+      if (existingUser) {
+        return {
+          success: false,
+          error: 'email_registered',
+        };
+      }
+
+      // 2. Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // 3. Create user
+      const user = await this.prisma.users.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+        },
+      });
+
+      return {
+        success: true,
+        user,
+      };
+    } catch (err) {
+      console.error('Registration error:', err);
+      return {
+        success: false,
+        error: 'req_failed',
+      };
     }
-
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) {
-      throw new UnauthorizedException('invalid_credentials');
-    }
-
-    const shortToken = signShortToken(user.id, user.email);
-    const longToken = signLongToken(user.id);
-
-    // Nastav cookies
-    res.cookie('shortTerm_token', shortToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none',
-      maxAge: 15 * 60 * 1000,
-      path: '/',
-    });
-
-    res.cookie('longTerm_token', longToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/',
-    });
-
-    return new UserResponseDto(user);
   }
 }

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
-import { signShortToken, signLongToken } from '../lib/jwt/jwt_helper'; // použiješ tvoje funkcie
+import { signShortToken, signLongToken } from '../lib/jwt/jwt_helper';
 
 @Injectable()
 export class AuthService {
@@ -15,11 +15,11 @@ export class AuthService {
 
     if (!user) return null;
 
-    const valid: boolean = await bcrypt.compare(password, user.password) as boolean;
+    const valid: boolean = await bcrypt.compare(password, user.password);
     if (!valid) return null;
 
     const shortToken: string = signShortToken(user.id, user.email);
-    const longToken: string  = signLongToken(user.id);
+    const longToken: string = signLongToken(user.id);
 
     return {
       user,

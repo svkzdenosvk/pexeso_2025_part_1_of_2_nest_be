@@ -35,20 +35,26 @@ export function signLongToken(id: number): string {
     expiresIn: JWT_LONG_EXPIRES_IN,
   });
 }
-// Verify short
-// export function verifyShortToken(token: string): My_Type_Unique_User | null {
-//   try {
-//     return jwt.verify(token, ensureSecret(JWT_SHORT_SECRET, 'SHORT')) as My_Type_Unique_User;
-//   } catch {
-//     return null;
-//   }
-// }
 
-// // Verify long
-// export function verifyLongToken(token: string): { id: number } | null {
-//   try {
-//     return jwt.verify(token, ensureSecret(JWT_LONG_SECRET, 'LONG')) as { id: number };
-//   } catch {
-//     return null;
-//   }
-// }
+//Verify short
+export function verifyShortToken(token: string): My_Type_Unique_User | null {
+  try {
+    return jwt.verify(
+      token,
+      ensureSecret(JWT_SHORT_SECRET, 'SHORT'),
+    ) as My_Type_Unique_User;
+  } catch {
+    return null;
+  }
+}
+
+// Verify long
+export function verifyLongToken(token: string): { id: number } | null {
+  try {
+    return jwt.verify(token, ensureSecret(JWT_LONG_SECRET, 'LONG')) as {
+      id: number;
+    };
+  } catch {
+    return null;
+  }
+}

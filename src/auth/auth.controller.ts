@@ -142,12 +142,15 @@ export class AuthController {
 
   //authCheck /api/me
   @Get('me')
-  async me(@Req() req: Request, @Res() res: Response) {
+  async me(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     try {
       // const shortToken = req.cookies['shortTerm_token'];
       // const longToken = req.cookies['longTerm_token'];
       const shortToken = String(req.cookies.shortTerm_token ?? ''); // string | undefined
       const longToken = String(req.cookies.longTerm_token ?? ''); // string | undefined
+
+      console.log('short token /me controller ', shortToken);
+      console.log('long token /me controller ', longToken);
 
       // 1) Try short token
       // if (shortToken) {
@@ -190,26 +193,26 @@ export class AuthController {
       // 4) Refresh short token
       const newShortToken = signShortToken(user.id, user.email);
 
-      // res.cookie('shortTerm_token', newShortToken, {
-      //   httpOnly: true,
-      //   secure: process.env.NODE_ENV === 'production',
-      //   sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      //   path: '/',
-      //   maxAge: 15 * 60 * 1000,
-      // });
+      res.cookie('shortTerm_token', newShortToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        path: '/',
+        maxAge: 15 * 60 * 1000,
+      });
 
-      // return res.json({ isLoggedIn: true, user });
+      return res.json({ isLoggedIn: true, user });
 
       //if no problem let chaining
-      return res
-        .cookie('shortTerm_token', newShortToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-          path: '/',
-          maxAge: 15 * 60 * 1000,
-        })
-        .json({ isLoggedIn: true, user });
+      // return res
+      //   .cookie('shortTerm_token', newShortToken, {
+      //     httpOnly: true,
+      //     secure: process.env.NODE_ENV === 'production',
+      //     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      //     path: '/',
+      //     maxAge: 15 * 60 * 1000,
+      //   })
+      //   .json({ isLoggedIn: true, user });
     } catch (err) {
       console.error('Auth check error:', err);
       return res.status(500).json({ isLoggedIn: false });

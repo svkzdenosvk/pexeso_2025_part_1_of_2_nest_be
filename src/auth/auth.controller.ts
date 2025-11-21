@@ -1,4 +1,12 @@
-import { Controller, Post, Get, Body, Res, Req, HttpCode } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Res,
+  Req,
+  HttpCode,
+} from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -118,6 +126,7 @@ export class AuthController {
       secure: process.env.NODE_ENV === 'production' ? true : false,
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       path: '/',
+      expires: new Date(0),
     });
 
     res.clearCookie('longTerm_token', {
@@ -125,6 +134,7 @@ export class AuthController {
       secure: process.env.NODE_ENV === 'production' ? true : false,
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       path: '/',
+      expires: new Date(0),
     });
 
     return res.json({ success: true });

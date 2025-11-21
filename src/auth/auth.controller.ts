@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Res, Req } from '@nestjs/common';
+import { Controller, Post, Get, Body, Res, Req, HttpCode } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -110,7 +110,8 @@ export class AuthController {
 
   //logout
   @Get('logout')
-  logout(@Res() res: Response) {
+  @HttpCode(200)
+  logout(@Res({ passthrough: true }) res: Response) {
     // clear cookies
     res.clearCookie('shortTerm_token', {
       httpOnly: true,

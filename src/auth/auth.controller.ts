@@ -119,7 +119,7 @@ export class AuthController {
   //logout
   @Get('logout')
   @HttpCode(200)
-  logout(@Res() res: Response) {
+  logout(@Res({ passthrough: true }) res: Response) {
     // clear cookies
     res.clearCookie('shortTerm_token', {
       httpOnly: true,
@@ -137,7 +137,7 @@ export class AuthController {
       expires: new Date(0),
     });
 
-    return res.json({ success: true });
+    return { success: true };
   }
 
   //authCheck /api/me

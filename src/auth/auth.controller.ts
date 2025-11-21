@@ -119,7 +119,7 @@ export class AuthController {
   //logout
   @Get('logout')
   @HttpCode(200)
-  logout(@Res({ passthrough: true }) res: Response) {
+  logout(@Res() res: Response) {
     // clear cookies
     res.clearCookie('shortTerm_token', {
       httpOnly: true,
@@ -142,7 +142,7 @@ export class AuthController {
 
   //authCheck /api/me
   @Get('me')
-  async me(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  async me(@Req() req: Request, @Res() res: Response) {
     try {
       // const shortToken = req.cookies['shortTerm_token'];
       // const longToken = req.cookies['longTerm_token'];

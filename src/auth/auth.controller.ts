@@ -127,6 +127,7 @@ export class AuthController {
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       path: '/',
       expires: new Date(0),
+      domain: 'pexeso-2025-part-1-of-2-nest-be.vercel.app',
     });
 
     res.clearCookie('longTerm_token', {
@@ -135,6 +136,7 @@ export class AuthController {
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       path: '/',
       expires: new Date(0),
+      domain: 'pexeso-2025-part-1-of-2-nest-be.vercel.app',
     });
 
     return { success: true };

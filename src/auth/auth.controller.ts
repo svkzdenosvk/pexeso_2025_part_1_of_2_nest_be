@@ -6,6 +6,8 @@ import {
   Res,
   Req,
   HttpCode,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
@@ -79,34 +81,39 @@ export class AuthController {
       email: string;
       password: string;
     },
-    @Res() res: Response,
   ) {
     const { name, email, password } = body;
 
-    // --- Error: missing credentials ---
     if (!name || !email || !password) {
-      return res.status(400).json({ error: 'missing_credentials' });
+      throw new HttpException(
+        { error: 'missing_credentials' }, // tvoj i18n error
+        HttpStatus.BAD_REQUEST, // status 400
+      );
     }
 
-    // --- Call service ---
     const result = await this.authService.registerUser(name, email, password);
 
-    // --- Error: email already exists ---
     if (!result.success && result.error === 'email_registered') {
-      return res.status(400).json({ error: 'email_registered' });
+      throw new HttpException(
+        { error: 'email_registered' },
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
-    // --- Unknown failure ---
     if (!result.success) {
-      return res.status(500).json({ error: 'req_failed' });
+      throw new HttpException(
+        { error: 'req_failed' },
+        HttpStatus.INTERNAL_SERVER_ERROR, // status 500
+      );
     }
 
-    // --- Should never happen but for safety ---
     if (!result.user) {
-      return res.status(500).json({ error: 'req_failed' });
+      throw new HttpException(
+        { error: 'req_failed' },
+        HttpStatus.INTERNAL_SERVER_ERROR, // status 500
+      );
     }
 
-    // --- SUCCESS ---
     return {
       user: {
         id: result.user.id,
@@ -115,6 +122,99 @@ export class AuthController {
       },
     };
   }
+
+  //registration
+  // @Post('registration')
+  // async register(
+  //   @Body()
+  //   body: {
+  //     name: string;
+  //     email: string;
+  //     password: string;
+  //   },
+  // ) {
+  //   const { name, email, password } = body;
+
+  //   if (!name || !email || !password) {
+  //     return {
+  //       error: 'missing_credentials',
+  //     };
+  //   }
+
+  //   const result = await this.authService.registerUser(name, email, password);
+
+  //   if (!result.success && result.error === 'email_registered') {
+  //     return {
+  //       error: 'email_registered',
+  //     };
+  //   }
+
+  //   if (!result.success) {
+  //     return {
+  //       error: 'req_failed',
+  //     };
+  //   }
+
+  //   if (!result.user) {
+  //     return {
+  //       error: 'req_failed',
+  //     };
+  //   }
+
+  //   return {
+  //     user: {
+  //       id: result.user.id,
+  //       name: result.user.name,
+  //       email: result.user.email,
+  //     },
+  //   };
+  // }
+
+  //registration
+  // @Post('registration')
+  // async register(
+  //   @Body()
+  //   body: {
+  //     name: string;
+  //     email: string;
+  //     password: string;
+  //   },
+  //   @Res() res: Response,
+  // ) {
+  //   const { name, email, password } = body;
+
+  //   // --- Error: missing credentials ---
+  //   if (!name || !email || !password) {
+  //     return res.status(400).json({ error: 'missing_credentials' });
+  //   }
+
+  //   // --- Call service ---
+  //   const result = await this.authService.registerUser(name, email, password);
+
+  //   // --- Error: email already exists ---
+  //   if (!result.success && result.error === 'email_registered') {
+  //     return res.status(400).json({ error: 'email_registered' });
+  //   }
+
+  //   // --- Unknown failure ---
+  //   if (!result.success) {
+  //     return res.status(500).json({ error: 'req_failed' });
+  //   }
+
+  //   // --- Should never happen but for safety ---
+  //   if (!result.user) {
+  //     return res.status(500).json({ error: 'req_failed' });
+  //   }
+
+  //   // --- SUCCESS ---
+  //   return {
+  //     user: {
+  //       id: result.user.id,
+  //       name: result.user.name,
+  //       email: result.user.email,
+  //     },
+  //   };
+  // }
 
   //logout
   @Get('logout')
@@ -144,13 +244,8 @@ export class AuthController {
   @Get('me')
   async me(@Req() req: Request, @Res() res: Response) {
     try {
-      // const shortToken = req.cookies['shortTerm_token'];
-      // const longToken = req.cookies['longTerm_token'];
       const shortToken = String(req.cookies.shortTerm_token ?? ''); // string | undefined
       const longToken = String(req.cookies.longTerm_token ?? ''); // string | undefined
-
-      console.log('short token /me controller ', shortToken);
-      console.log('long token /me controller ', longToken);
 
       // 1) Try short token
       // if (shortToken) {

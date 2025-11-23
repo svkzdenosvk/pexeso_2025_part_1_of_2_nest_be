@@ -29,17 +29,23 @@ export class AuthController {
   @Post('login')
   async login(
     @Body() body: { email: string; password: string },
-    @Res() res: Response,
+    @Res({ passthrough: true }) res: Response,
   ) {
     const { email, password } = body;
 
     if (!email || !password) {
-      return res.status(400).json({ error: 'missing_credentials' });
+      throw new HttpException(
+        { error: 'missing_credentials' },
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const result = await this.authService.validateUser(email, password);
     if (!result) {
-      return res.status(401).json({ error: 'invalid_credentials' });
+      throw new HttpException(
+        { error: 'invalid_credentials' },
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
     const { user, shortToken, longToken } = result;
@@ -63,13 +69,13 @@ export class AuthController {
       path: '/',
     });
 
-    return res.json({
+    return {
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
       },
-    });
+    };
   }
 
   //registration
@@ -122,99 +128,6 @@ export class AuthController {
       },
     };
   }
-
-  //registration
-  // @Post('registration')
-  // async register(
-  //   @Body()
-  //   body: {
-  //     name: string;
-  //     email: string;
-  //     password: string;
-  //   },
-  // ) {
-  //   const { name, email, password } = body;
-
-  //   if (!name || !email || !password) {
-  //     return {
-  //       error: 'missing_credentials',
-  //     };
-  //   }
-
-  //   const result = await this.authService.registerUser(name, email, password);
-
-  //   if (!result.success && result.error === 'email_registered') {
-  //     return {
-  //       error: 'email_registered',
-  //     };
-  //   }
-
-  //   if (!result.success) {
-  //     return {
-  //       error: 'req_failed',
-  //     };
-  //   }
-
-  //   if (!result.user) {
-  //     return {
-  //       error: 'req_failed',
-  //     };
-  //   }
-
-  //   return {
-  //     user: {
-  //       id: result.user.id,
-  //       name: result.user.name,
-  //       email: result.user.email,
-  //     },
-  //   };
-  // }
-
-  //registration
-  // @Post('registration')
-  // async register(
-  //   @Body()
-  //   body: {
-  //     name: string;
-  //     email: string;
-  //     password: string;
-  //   },
-  //   @Res() res: Response,
-  // ) {
-  //   const { name, email, password } = body;
-
-  //   // --- Error: missing credentials ---
-  //   if (!name || !email || !password) {
-  //     return res.status(400).json({ error: 'missing_credentials' });
-  //   }
-
-  //   // --- Call service ---
-  //   const result = await this.authService.registerUser(name, email, password);
-
-  //   // --- Error: email already exists ---
-  //   if (!result.success && result.error === 'email_registered') {
-  //     return res.status(400).json({ error: 'email_registered' });
-  //   }
-
-  //   // --- Unknown failure ---
-  //   if (!result.success) {
-  //     return res.status(500).json({ error: 'req_failed' });
-  //   }
-
-  //   // --- Should never happen but for safety ---
-  //   if (!result.user) {
-  //     return res.status(500).json({ error: 'req_failed' });
-  //   }
-
-  //   // --- SUCCESS ---
-  //   return {
-  //     user: {
-  //       id: result.user.id,
-  //       name: result.user.name,
-  //       email: result.user.email,
-  //     },
-  //   };
-  // }
 
   //logout
   @Get('logout')

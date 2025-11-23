@@ -155,7 +155,7 @@ export class AuthController {
 
   //authCheck /api/me
   @Get('me')
-  async me(@Req() req: Request, @Res() res: Response) {
+  async me(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     try {
       const shortToken = String(req.cookies.shortTerm_token ?? ''); // string | undefined
       const longToken = String(req.cookies.longTerm_token ?? ''); // string | undefined
@@ -172,7 +172,8 @@ export class AuthController {
           });
 
           if (user) {
-            return res.json({ isLoggedIn: true, user });
+            // return res.json({ isLoggedIn: true, user });
+            return { isLoggedIn: true, user };
           }
         }
       }
@@ -180,12 +181,14 @@ export class AuthController {
       // 2) No short token -> try long token
       // if (!longToken) {
       if (!longToken?.length) {
-        return res.status(401).json({ isLoggedIn: false });
+        // return res.status(401).json({ isLoggedIn: false });
+        return { isLoggedIn: false };
       }
 
       const decodedLong = verifyLongToken(longToken);
       if (!decodedLong?.id) {
-        return res.status(401).json({ isLoggedIn: false });
+        // return res.status(401).json({ isLoggedIn: false });
+        return { isLoggedIn: false };
       }
 
       // 3) Fetch user
@@ -195,7 +198,8 @@ export class AuthController {
       });
 
       if (!user) {
-        return res.status(401).json({ isLoggedIn: false });
+        // return res.status(401).json({ isLoggedIn: false });
+        return { isLoggedIn: false };
       }
 
       // 4) Refresh short token
@@ -209,18 +213,8 @@ export class AuthController {
         maxAge: 15 * 60 * 1000,
       });
 
-      return res.json({ isLoggedIn: true, user });
-
-      //if no problem let chaining
-      // return res
-      //   .cookie('shortTerm_token', newShortToken, {
-      //     httpOnly: true,
-      //     secure: process.env.NODE_ENV === 'production',
-      //     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      //     path: '/',
-      //     maxAge: 15 * 60 * 1000,
-      //   })
-      //   .json({ isLoggedIn: true, user });
+      // return res.json({ isLoggedIn: true, user });
+      return { isLoggedIn: true, user };
     } catch (err) {
       console.error('Auth check error:', err);
       return res.status(500).json({ isLoggedIn: false });

@@ -9,15 +9,18 @@ export class AuthService {
 
   //login
   async validateUser(email: string, password: string) {
+    // Find user in PostgreSQL via Prisma
     const user = await this.prisma.users.findUnique({
       where: { email },
     });
 
     if (!user) return null;
 
+    // Compare hashed password
     const valid: boolean = await bcrypt.compare(password, user.password);
     if (!valid) return null;
 
+    // Generate JWT tokens
     const shortToken: string = signShortToken(user.id, user.email);
     const longToken: string = signLongToken(user.id);
 
@@ -31,7 +34,7 @@ export class AuthService {
   //registration
   async registerUser(name: string, email: string, password: string) {
     try {
-      // 1. Check if email already exists
+      // Check if email already exists
       const existingUser = await this.prisma.users.findUnique({
         where: { email },
       });
@@ -43,10 +46,10 @@ export class AuthService {
         };
       }
 
-      // 2. Hash password
+      // Hash password
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // 3. Create user
+      // Create user
       const user = await this.prisma.users.create({
         data: {
           name,

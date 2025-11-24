@@ -31,15 +31,17 @@ export class AuthController {
     @Body() body: { email: string; password: string },
     @Res({ passthrough: true }) res: Response,
   ) {
+    // Extract credentials from request body
     const { email, password } = body;
 
+    // Validate input fields
     if (!email || !password) {
       throw new HttpException(
         { error: 'missing_credentials' },
         HttpStatus.BAD_REQUEST,
       );
     }
-
+    // Auth.service login part validateUser
     const result = await this.authService.validateUser(email, password);
     if (!result) {
       throw new HttpException(
@@ -52,7 +54,7 @@ export class AuthController {
 
     //set this on server process.env.NODE_ENV === 'production';!!!!!!!!!!
 
-    // Cookies
+    // Set authentication cookies
     res.cookie('shortTerm_token', shortToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production' ? true : false,
@@ -69,6 +71,7 @@ export class AuthController {
       path: '/',
     });
 
+    //  Return user data
     return {
       user: {
         id: user.id,
@@ -88,15 +91,17 @@ export class AuthController {
       password: string;
     },
   ) {
+    //  Extract and validate registration data from request body
     const { name, email, password } = body;
 
     if (!name || !email || !password) {
       throw new HttpException(
-        { error: 'missing_credentials' }, // tvoj i18n error
+        { error: 'missing_credentials' },
         HttpStatus.BAD_REQUEST, // status 400
       );
     }
 
+    // Auth.service registraton part registerUser
     const result = await this.authService.registerUser(name, email, password);
 
     if (!result.success && result.error === 'email_registered') {
@@ -119,7 +124,7 @@ export class AuthController {
         HttpStatus.INTERNAL_SERVER_ERROR, // status 500
       );
     }
-
+    // Return user data (without password)
     return {
       user: {
         id: result.user.id,
@@ -133,7 +138,7 @@ export class AuthController {
   @Get('logout')
   @HttpCode(200)
   logout(@Res({ passthrough: true }) res: Response) {
-    // clear cookies
+    //  Remove authentication cookies
     res.clearCookie('shortTerm_token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production' ? true : false,
@@ -150,6 +155,7 @@ export class AuthController {
       expires: new Date(0),
     });
 
+    // Confirm logout success
     return { success: true };
   }
 
@@ -157,11 +163,11 @@ export class AuthController {
   @Get('me')
   async me(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     try {
+      // Extract tokens from cookies
       const shortToken = String(req.cookies.shortTerm_token ?? ''); // string | undefined
       const longToken = String(req.cookies.longTerm_token ?? ''); // string | undefined
 
-      // 1) Try short token
-      // if (shortToken) {
+      // Attempt to verify short-term token
       if (shortToken?.length) {
         const decodedShort = verifyShortToken(shortToken);
 
@@ -172,37 +178,32 @@ export class AuthController {
           });
 
           if (user) {
-            // return res.json({ isLoggedIn: true, user });
             return { isLoggedIn: true, user };
           }
         }
-      }
+      } // else token expired or not exists
 
-      // 2) No short token -> try long token
-      // if (!longToken) {
+      // Fallback: validate long-term token
       if (!longToken?.length) {
-        // return res.status(401).json({ isLoggedIn: false });
         return { isLoggedIn: false };
       }
 
       const decodedLong = verifyLongToken(longToken);
       if (!decodedLong?.id) {
-        // return res.status(401).json({ isLoggedIn: false });
         return { isLoggedIn: false };
       }
 
-      // 3) Fetch user
+      // Confirm that user still exists in database
       const user = await this.prisma.users.findUnique({
         where: { id: decodedLong.id },
         select: { id: true, email: true, name: true },
       });
 
       if (!user) {
-        // return res.status(401).json({ isLoggedIn: false });
         return { isLoggedIn: false };
       }
 
-      // 4) Refresh short token
+      // Refresh short-term token and set new cookie
       const newShortToken = signShortToken(user.id, user.email);
 
       res.cookie('shortTerm_token', newShortToken, {
@@ -213,7 +214,7 @@ export class AuthController {
         maxAge: 15 * 60 * 1000,
       });
 
-      // return res.json({ isLoggedIn: true, user });
+      // Return authenticated user
       return { isLoggedIn: true, user };
     } catch (err) {
       console.error('Auth check error:', err);

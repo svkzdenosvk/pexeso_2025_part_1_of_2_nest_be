@@ -43,14 +43,17 @@ export class AuthController {
     }
     // Auth.service login part validateUser
     const result = await this.authService.validateUser(email, password);
-    if (!result) {
-      throw new HttpException(
-        { error: 'invalid_credentials' },
-        HttpStatus.UNAUTHORIZED,
-      );
+
+    if (!result.ok || !result.data) {
+      switch (result.error) {
+        case 'invalid_credentials':
+          throw new HttpException({ error: 'invalid_credentials' }, 401);
+        default:
+          throw new HttpException({ error: 'req_failed' }, 500);
+      }
     }
 
-    const { user, shortToken, longToken } = result;
+    const { user, shortToken, longToken } = result.data;
 
     //set this on server process.env.NODE_ENV === 'production';!!!!!!!!!!
 
@@ -104,34 +107,17 @@ export class AuthController {
     // Auth.service registraton part registerUser
     const result = await this.authService.registerUser(name, email, password);
 
-    if (!result.success && result.error === 'email_registered') {
-      throw new HttpException(
-        { error: 'email_registered' },
-        HttpStatus.BAD_REQUEST,
-      );
+    if (!result.ok) {
+      switch (result.error) {
+        case 'email_registered':
+          throw new HttpException({ error: 'email_registered' }, 400);
+
+        default:
+          throw new HttpException({ error: 'req_failed' }, 500);
+      }
     }
 
-    if (!result.success) {
-      throw new HttpException(
-        { error: 'req_failed' },
-        HttpStatus.INTERNAL_SERVER_ERROR, // status 500
-      );
-    }
-
-    if (!result.user) {
-      throw new HttpException(
-        { error: 'req_failed' },
-        HttpStatus.INTERNAL_SERVER_ERROR, // status 500
-      );
-    }
-    // Return user data (without password)
-    return {
-      user: {
-        id: result.user.id,
-        name: result.user.name,
-        email: result.user.email,
-      },
-    };
+    return { user: result.data };
   }
 
   //logout

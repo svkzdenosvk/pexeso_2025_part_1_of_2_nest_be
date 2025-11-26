@@ -9,26 +9,37 @@ export class AuthService {
 
   //login
   async validateUser(email: string, password: string) {
-    // Find user in PostgreSQL via Prisma
-    const user = await this.prisma.users.findUnique({
-      where: { email },
-    });
+    try {
+      // Find user in PostgreSQL via Prisma
+      const user = await this.prisma.users.findUnique({ where: { email } });
+      if (!user) {
+        return { ok: false, error: 'invalid_credentials' };
+      }
+      // Compare hashed password
+      const valid = await bcrypt.compare(password, user.password);
+      if (!valid) {
+        return { ok: false, error: 'invalid_credentials' };
+      }
 
-    if (!user) return null;
+      // Generate JWT tokens
+      const shortToken = signShortToken(user.id, user.email);
+      const longToken = signLongToken(user.id);
 
-    // Compare hashed password
-    const valid: boolean = await bcrypt.compare(password, user.password);
-    if (!valid) return null;
-
-    // Generate JWT tokens
-    const shortToken: string = signShortToken(user.id, user.email);
-    const longToken: string = signLongToken(user.id);
-
-    return {
-      user,
-      shortToken,
-      longToken,
-    };
+      return {
+        ok: true,
+        data: {
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+          },
+          shortToken,
+          longToken,
+        },
+      };
+    } catch {
+      return { ok: false, error: 'req_failed' };
+    }
   }
 
   //registration
@@ -40,10 +51,7 @@ export class AuthService {
       });
 
       if (existingUser) {
-        return {
-          success: false,
-          error: 'email_registered',
-        };
+        return { ok: false, error: 'email_registered' };
       }
 
       // Hash password
@@ -51,23 +59,19 @@ export class AuthService {
 
       // Create user
       const user = await this.prisma.users.create({
-        data: {
-          name,
-          email,
-          password: hashedPassword,
-        },
+        data: { name, email, password: hashedPassword },
       });
 
       return {
-        success: true,
-        user,
+        ok: true,
+        data: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        },
       };
-    } catch (err) {
-      console.error('Registration error:', err);
-      return {
-        success: false,
-        error: 'req_failed',
-      };
+    } catch {
+      return { ok: false, error: 'req_failed' };
     }
   }
 }

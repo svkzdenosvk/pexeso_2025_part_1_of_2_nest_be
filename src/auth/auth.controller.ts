@@ -17,6 +17,8 @@ import {
   verifyLongToken,
   signShortToken,
 } from '../lib/jwt/jwt_helper';
+import { LoginDto } from './dto/login.dto';
+import { RegistrationDto } from './dto/registration.dto';
 
 @Controller('api')
 export class AuthController {
@@ -28,21 +30,22 @@ export class AuthController {
   //login
   @Post('login')
   async login(
-    @Body() body: { email: string; password: string },
+    // @Body() body: { email: string; password: string },
+    @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
   ) {
     // Extract credentials from request body
-    const { email, password } = body;
+    // const { email, password } = body;
 
-    // Validate input fields
-    if (!email || !password) {
-      throw new HttpException(
-        { error: 'missing_credentials' },
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    // // Validate input fields
+    // if (!email || !password) {
+    //   throw new HttpException(
+    //     { error: 'missing_credentials' },
+    //     HttpStatus.BAD_REQUEST,
+    //   );
+    // }
     // Auth.service login part validateUser
-    const result = await this.authService.validateUser(email, password);
+    const result = await this.authService.validateUser(dto.email, dto.password);
 
     if (!result.ok || !result.data) {
       switch (result.error) {
@@ -86,26 +89,23 @@ export class AuthController {
 
   //registration
   @Post('registration')
-  async register(
-    @Body()
-    body: {
-      name: string;
-      email: string;
-      password: string;
-    },
-  ) {
+  async register(@Body() dto: RegistrationDto) {
     //  Extract and validate registration data from request body
-    const { name, email, password } = body;
+    // const { name, email, password } = body;
 
-    if (!name || !email || !password) {
-      throw new HttpException(
-        { error: 'missing_credentials' },
-        HttpStatus.BAD_REQUEST, // status 400
-      );
-    }
+    // if (!name || !email || !password) {
+    //   throw new HttpException(
+    //     { error: 'missing_credentials' },
+    //     HttpStatus.BAD_REQUEST, // status 400
+    //   );
+    // }
 
     // Auth.service registraton part registerUser
-    const result = await this.authService.registerUser(name, email, password);
+    const result = await this.authService.registerUser(
+      dto.name,
+      dto.email,
+      dto.password,
+    );
 
     if (!result.ok) {
       switch (result.error) {

@@ -106,6 +106,7 @@ export class AuthController {
       dto.email,
       dto.password,
     );
+    console.log('REGISTER RESULT:', result);
 
     if (!result.ok) {
       switch (result.error) {

@@ -45,13 +45,11 @@ export class AuthService {
   //registration
   async registerUser(name: string, email: string, password: string) {
     try {
-        console.log('REGISTER service CALL:', { name, email, password });
 
       // Check if email already exists
       const existingUser = await this.prisma.users.findUnique({
         where: { email },
       });
-  console.log('service EXISTING USER:', existingUser);
 
       if (existingUser) {
         return { ok: false, error: 'email_registered' };

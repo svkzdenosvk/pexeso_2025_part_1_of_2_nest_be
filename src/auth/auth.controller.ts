@@ -52,7 +52,7 @@ export class AuthController {
         case 'invalid_credentials':
           throw new HttpException({ error: 'invalid_credentials' }, 401);
         default:
-          throw new HttpException({ error: 'req_failed' }, 500);
+          throw new HttpException({ error: 'unknown_err' }, 500);
       }
     }
 
@@ -90,23 +90,12 @@ export class AuthController {
   //registration
   @Post('registration')
   async register(@Body() dto: RegistrationDto) {
-    //  Extract and validate registration data from request body
-    // const { name, email, password } = body;
-
-    // if (!name || !email || !password) {
-    //   throw new HttpException(
-    //     { error: 'missing_credentials' },
-    //     HttpStatus.BAD_REQUEST, // status 400
-    //   );
-    // }
-
     // Auth.service registraton part registerUser
     const result = await this.authService.registerUser(
       dto.name,
       dto.email,
       dto.password,
     );
-    console.log('REGISTER RESULT controlller:', result);
 
     if (!result.ok) {
       switch (result.error) {

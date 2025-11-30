@@ -51,6 +51,8 @@ export class AuthController {
       switch (result.error) {
         case 'invalid_credentials':
           throw new HttpException({ error: 'invalid_credentials' }, 401);
+        case 'req_failed':
+          throw new HttpException({ error: 'req_failed' }, 500);
         default:
           throw new HttpException({ error: 'unknown_err' }, 500);
       }

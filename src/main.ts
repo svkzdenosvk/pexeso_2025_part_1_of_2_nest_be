@@ -1,11 +1,27 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
-import { /*HttpException,*/ ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
+
+/**
+ * MAIN ENTRY POINT
+ *
+ * This file initializes and starts the NestJS application.
+ * It sets up global validation, CORS, and cookie parsing.
+ *
+ * Responsibilities:
+ * - Create NestJS application from AppModule
+ * - Apply global validation pipes (whitelist, forbid unknown properties, auto-transform)
+ * - Enable CORS for frontend communication with credentials support
+ * - Use cookie parser for reading and setting cookies
+ * - Start server on specified port (default 3000)
+ */
 
 async function mainFn() {
+  // Create NestJS application
   const app = await NestFactory.create(AppModule);
 
+  // Apply global validation rules
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -13,23 +29,6 @@ async function mainFn() {
       transform: true,
     }),
   );
-
-  // app.useGlobalPipes(
-  //   new ValidationPipe({
-  //     whitelist: true,
-  //     forbidNonWhitelisted: true,
-  //     transform: true,
-  //     exceptionFactory: (validationErrors = []) => {
-  //       // vezmeme prvú chybu (alebo si spravíš vlastnú logiku)
-  //       const errorMsg =
-  //         validationErrors[0]?.constraints?.[
-  //           Object.keys(validationErrors[0].constraints)[0]
-  //         ] || 'invalid_request';
-
-  //       return new HttpException({ error: errorMsg }, 400);
-  //     },
-  //   }),
-  // );
 
   // Enable CORS for frontend communication
   app.enableCors({
@@ -49,4 +48,5 @@ async function mainFn() {
   console.log('🚀 Nest server running on port 3000');
 }
 
+// Initialize the app
 void mainFn();

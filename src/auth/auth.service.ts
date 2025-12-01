@@ -3,19 +3,49 @@ import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { signShortToken, signLongToken } from '../lib/jwt/jwt_helper';
 
+/**
+ * AUTH SERVICE
+ *
+ * This service handles all authentication-related logic:
+ *
+ * 1. validateUser()
+ *    - Finds user in PostgreSQL (Prisma)
+ *    - Verifies password via bcrypt
+ *    - Generates JWT tokens (short-term + long-term)
+ *    - Returns structured result for the controller
+ *
+ * 2. registerUser()
+ *    - Checks for existing email
+ *    - Hashes password
+ *    - Creates new user in the database
+ *    - Returns basic user data
+ *
+ * Notes:
+ *   - All methods return a unified { ok, data?, error? } format.
+ *   - Actual HTTP responses are handled in AuthController.
+ */
+
 @Injectable()
 export class AuthService {
   constructor(private prisma: PrismaService) {}
 
   //login
+
+  /**
+   * Validates user credentials and generates JWT tokens.
+   *
+   * @param email - User email
+   * @param password - Plain text password
+   * @returns { ok, data?, error? }
+   */
   async validateUser(email: string, password: string) {
     try {
-      // Find user in PostgreSQL via Prisma
+      // Find user in PostgreSQL via Prisma by email
       const user = await this.prisma.users.findUnique({ where: { email } });
       if (!user) {
         return { ok: false, error: 'invalid_credentials' };
       }
-      // Compare hashed password
+      // Compare hashed password with submitted one
       const valid = await bcrypt.compare(password, user.password);
       if (!valid) {
         return { ok: false, error: 'invalid_credentials' };
@@ -43,6 +73,15 @@ export class AuthService {
   }
 
   //registration
+
+  /**
+   * Registers a new user in the database.
+   *
+   * @param name - User's display name
+   * @param email - Unique email address
+   * @param password - Plain text password
+   * @returns { ok, data?, error? }
+   */
   async registerUser(name: string, email: string, password: string) {
     try {
       // Check if email already exists
@@ -54,10 +93,10 @@ export class AuthService {
         return { ok: false, error: 'email_registered' };
       }
 
-      // Hash password
+      // Hash password with bcrypt
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Create user
+      // Create user -> insert new user record into PostgreSQL
       const user = await this.prisma.users.create({
         data: { name, email, password: hashedPassword },
       });
